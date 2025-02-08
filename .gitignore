@@ -1,0 +1,4 @@
+.nerves
+build.log
+deps/**/*
+_build/**/*
