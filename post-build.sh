@@ -11,11 +11,3 @@ ln -sf ops.fw $TARGET_DIR/usr/share/fwup/revert.fw
 
 # Copy the fwup includes to the images dir
 cp -rf $NERVES_DEFCONFIG_DIR/fwup_include $BINARIES_DIR
-
-mkdir -p $BINARIES_DIR/boot/extlinux
-cp $NERVES_DEFCONFIG_DIR/extlinux/extlinux.conf $BINARIES_DIR/boot/extlinux/
-cp $BINARIES_DIR/zImage $BINARIES_DIR/boot/
-cp $BINARIES_DIR/*.dtb $BINARIES_DIR/boot/
-cp $BINARIES_DIR/rootfs.cpio $BINARIES_DIR/boot/initramfs
-
-genext2fs -B 1024 -b 51200 -d $BINARIES_DIR/boot/ $BINARIES_DIR/boot.img
