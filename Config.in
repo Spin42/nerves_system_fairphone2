@@ -5,6 +5,5 @@
 menu "Custom Packages"
 
 source "$NERVES_DEFCONFIG_DIR/packages/fp2-firmware/Config.in"
-source "$NERVES_DEFCONFIG_DIR/packages/cross-ldd/Config.in"
 
 endmenu
