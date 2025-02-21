@@ -1,0 +1,4 @@
+config BR2_PACKAGE_INITRAMFS_BUILDROOT
+        bool "Precompiled initramfs made with Buildroot"
+        help
+          This package provides initramfs for different architecture and feature sets.
