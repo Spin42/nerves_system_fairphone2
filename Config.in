@@ -6,5 +6,7 @@ menu "Custom Packages"
 
 source "$NERVES_DEFCONFIG_DIR/packages/fp2-firmware/Config.in"
 source "$NERVES_DEFCONFIG_DIR/packages/citros-initramfs/Config.in"
+source "$NERVES_DEFCONFIG_DIR/packages/qrtr/Config.in"
+source "$NERVES_DEFCONFIG_DIR/packages/rmtfs/Config.in"
 
 endmenu
