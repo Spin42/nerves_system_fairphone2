@@ -20,7 +20,7 @@ This is the base Nerves System configuration for the Fairphone 2.
 | Camera               | Yes but not supported                                             |
 | Ethernet             | No                                                                |
 | WiFi                 | Yes                                                               |
-| Bluetooth            | [See Bluetooth](#bluetooth)                                       |
+| Bluetooth            | Yes, but no Elixir support [See Bluetooth](#bluetooth)            |
 | Audio                | Yes but not supported                                             |
 | Modem                | Yes 2G/3G/LTE dual SIM, but no Elixir support [See Modem](#modem) |
 
@@ -114,7 +114,7 @@ A UART port is available (`ttyMSM0`) but requires disassembling the phone and so
 
 ## Bluetooth
 
-Bluetooth is supported through the BlueZ stack. Additional testing in Nerves is required.
+Bluetooth is supported through the BlueZ stack. This requires to start dbus and bluetoothd in an Elixir application. More Elixir testing is required.
 
 ## Modem
 
