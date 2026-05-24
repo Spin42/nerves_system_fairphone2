@@ -1,0 +1,21 @@
+config BR2_PACKAGE_CITRONICS_INITRAMFS
+	bool "citronics-initramfs [FP2]"
+	depends on !BR2_STATIC_LIBS
+	depends on BR2_USE_MMU
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	select BR2_PACKAGE_BUSYBOX
+	select BR2_PACKAGE_UNUDHCPD
+	select BR2_PACKAGE_MULTIPATH_TOOLS
+	select BR2_PACKAGE_PARTED
+	select BR2_PACKAGE_E2FSPROGS
+	select BR2_PACKAGE_UTIL_LINUX_BINARIES
+	help
+	  Builds the Citronics recovery initramfs from source and bakes in
+	  the kernel-version-matched module set, the helper binaries it
+	  needs (kpartx / parted / unudhcpd) with their shared-library
+	  closure, and the Adreno GPU firmware.
+
+	  The initramfs reads rootfs= / bootpart= from the kernel command
+	  line (extlinux.conf), kpartx-maps the userdata partition into its
+	  subpartitions, mounts the rootfs read-only and switch_roots into
+	  it. Replaces the old prebuilt citros-initramfs download.

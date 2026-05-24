@@ -67,8 +67,8 @@ defmodule NervesSystemFairphone2.MixProject do
   defp deps do
     [
       {:nerves, "~> 1.11", runtime: false},
-      {:nerves_system_br, "1.33.1", runtime: false},
-      {:nerves_toolchain_armv7_nerves_linux_gnueabihf, "~> 13.2.0", runtime: false},
+      {:nerves_system_br, "1.33.8", runtime: false},
+      {:nerves_toolchain_armv7_nerves_linux_gnueabihf, "~> 14.2.0", runtime: false},
       {:nerves_system_linter, "~> 0.4", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.22", only: :docs, runtime: false}
     ]
@@ -100,9 +100,17 @@ defmodule NervesSystemFairphone2.MixProject do
   defp package_files do
     [
       "rootfs_overlay",
+      "extlinux",
+      "scripts",
+      "packages",
+      "patches",
+      "fwup_include",
       "fwup-ops.conf",
       "fwup.conf",
-      "linux-6.6.defconfig",
+      "linux-6.15.defconfig",
+      "busybox-fp2.fragment",
+      "Config.in",
+      "external.mk",
       "mix.exs",
       "nerves_defconfig",
       "post-build.sh",

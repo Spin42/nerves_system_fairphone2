@@ -1,0 +1,25 @@
+Mount rootfs and boot partitions as read-only
+
+Mount rootfs and boot partitions with the 'ro' flag to ensure
+they are mounted read-only for better system integrity.
+
+--- a/initramfs/usr/share/citronics-initramfs/functions.sh
++++ b/initramfs/usr/share/citronics-initramfs/functions.sh
+@@ -391,7 +391,7 @@ mount_rootfs() {
+     done
+
+     if [ -e "$rootfs_device" ]; then
+-        mount "$rootfs_device" /sysroot
++        mount -o ro "$rootfs_device" /sysroot
+     else
+         echo_kmsg "Device $rootfs_device not available after 10 seconds, cannot mount rootfs."
+     fi
+@@ -417,7 +417,7 @@ mount_boot_partition() {
+     done
+
+     if [ -e "$boot_partition_device" ]; then
+-        mount "$boot_partition_device" /sysroot/boot
++        mount -o ro "$boot_partition_device" /sysroot/boot
+     else
+         echo_kmsg "Device $boot_partition_device not available after 10 seconds, cannot mount boot partition."
+     fi

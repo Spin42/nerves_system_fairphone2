@@ -1,4 +1,6 @@
 config BR2_PACKAGE_QRTR
-        bool "Qualcomm IPC Router userspace reference (QRTR)"
+        bool "qrtr [Qualcomm generic]"
         help
-          Userspace reference for net/qrtr in the Linux kernel.
+          Userspace reference for net/qrtr (the Qualcomm IPC Router) in
+          the Linux kernel. Provides libqrtr, which rmtfs and tqftpserv
+          link against.

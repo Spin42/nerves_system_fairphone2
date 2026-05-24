@@ -1,0 +1,5 @@
+config BR2_PACKAGE_UNUDHCPD
+	bool "unudhcpd [Generic]"
+	help
+	  Single-IP DHCP server, used by the citronics initramfs to
+	  hand the connected USB host an IP during recovery.

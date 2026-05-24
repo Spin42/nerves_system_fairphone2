@@ -1,0 +1,22 @@
+# Kernel modules to copy into the initramfs.
+#
+# Intentionally empty for the Fairphone 2.
+#
+# Everything the citronics initramfs touches before pivot_root is built-in
+# (=y) in linux-6.15.defconfig:
+#
+#   CONFIG_SQUASHFS=y / CONFIG_SQUASHFS_XZ=y   ← rootfs filesystem
+#   CONFIG_EXT4_FS=y                            ← boot partition
+#   CONFIG_F2FS_FS=y                            ← application-data partition
+#   CONFIG_VFAT_FS / CONFIG_FAT_FS              ← (only =m, not needed at boot)
+#   CONFIG_BLK_DEV_DM=y / CONFIG_DM_*           ← kpartx subpartition mapping
+#   CONFIG_USB_GADGET=y / CONFIG_USB_ETH=y      ← USB recovery network
+#
+# The =m drivers in this system (modem QCOM_Q6V5_MSS, QRTR, FASTRPC,
+# IIO_QCOM_SMGR*, …) all load AFTER pivot_root from the real rootfs, so they
+# do not belong here — carrying extra .ko files only inflates the cpio.gz
+# past lk2nd's max-initrd ceiling.
+#
+# If a future kernel revision flips one of the boot-critical options above to
+# =m, list it here as a path relative to /lib/modules/<ver>/ — for example
+#   kernel/fs/squashfs/squashfs.ko

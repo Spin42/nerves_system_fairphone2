@@ -503,7 +503,14 @@ CONFIG_RPMSG_QCOM_SMD=y
 CONFIG_QCOM_COMMAND_DB=y
 CONFIG_QCOM_GSBI=y
 CONFIG_QCOM_OCMEM=y
-# CONFIG_QCOM_PD_MAPPER is not set
+# In-kernel protection-domain mapper + sysmon. Required by the ADSP
+# remoteproc bring-up (replaces the userspace pd-mapper daemon) so the
+# ADSP's sensor PD can register over QMI.
+CONFIG_QCOM_PD_MAPPER=y
+CONFIG_QCOM_SYSMON=y
+# Sensor registry service: serves /lib/firmware/qcom/sensors/sns.reg to the
+# ADSP SMGR firmware over QMI (drivers/soc/qcom/qcom_sns_reg.c).
+CONFIG_QCOM_SNS_REG=m
 CONFIG_QCOM_RMTFS_MEM=y
 CONFIG_QCOM_RPM_MASTER_STATS=y
 CONFIG_QCOM_SMEM=y
@@ -526,6 +533,16 @@ CONFIG_TSL2772=m
 CONFIG_AK8975=y
 CONFIG_IIO_HRTIMER_TRIGGER=y
 CONFIG_BMP280=y
+# Qualcomm Sensor Manager (SMGR) IIO drivers. The ADSP runs the sensor
+# firmware (LSM330D accel/gyro, AK8963 mag, LT1PA01 prox/light) and exposes
+# samples over SMGR/QMI; these drivers surface them as qcom-smgr-* IIO
+# devices under /sys/bus/iio/devices. See README "Sensors".
+CONFIG_IIO_QCOM_SMGR=m
+CONFIG_IIO_QCOM_SMGR_ACCEL=m
+CONFIG_IIO_QCOM_SMGR_GYRO=m
+CONFIG_IIO_QCOM_SMGR_MAG=m
+CONFIG_IIO_QCOM_SMGR_PRESSURE=m
+CONFIG_IIO_QCOM_SMGR_PROX=m
 CONFIG_PWM=y
 CONFIG_PWM_CLK=m
 CONFIG_PHY_QCOM_APQ8064_SATA=y
@@ -611,3 +628,10 @@ CONFIG_RCU_EXP_CPU_STALL_TIMEOUT=20
 # CONFIG_RCU_TRACE is not set
 CONFIG_FUNCTION_TRACER=y
 CONFIG_BACKTRACE_VERBOSE=y
+
+# FastRPC (Hexagon DSP RPC). Builds drivers/misc/fastrpc.ko, which provides the
+# /dev/fastrpc-adsp char device that hexagonrpcd attaches to in order to serve
+# the DSP shell + libraries to the ADSP at boot. (This kernel names the symbol
+# QCOM_FASTRPC, not the mainline FASTRPC.) Requires a matching `qcom,fastrpc`
+# node on the ADSP glink edge in the device tree.
+CONFIG_QCOM_FASTRPC=m

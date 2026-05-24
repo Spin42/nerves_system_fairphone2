@@ -1,0 +1,39 @@
+Move /proc, /sys, /dev into /sysroot before switch_root
+
+After `switch_root /sysroot /sbin/init`, the kernel exec's the new
+init (Nerves: erlinit) in the new rootfs. erlinit then issues mount(2)
+syscalls referencing /dev/mmcblk0p20p1, /dev/mmcblk0p20p3, etc.
+
+Without `mount --move /dev /sysroot/dev` beforehand, busybox
+switch_root tears down the initramfs's devtmpfs mount during the
+pivot_root + umount cleanup. The new rootfs's own /dev (an empty
+directory from the squashfs) is left in its place, so every
+/dev/<block> reference erlinit makes fails with
+`Can't lookup blockdev`, the init exits, and the kernel reboots
+shortly after switch_root.
+
+Mirror the postmarketOS / systemd pattern of moving the critical
+virtual filesystems into the new root before switching.
+
+--- a/initramfs/usr/share/citronics-initramfs/init
++++ b/initramfs/usr/share/citronics-initramfs/init
+@@ -52,7 +52,18 @@
+         # echo_kmsg "Restore consoles to original state..."
+         # restore_consoles
+
+-        echo_kmsg "Switching to /sysroot"
++        echo_kmsg "Moving /proc, /sys, /dev into /sysroot before switch_root"
++        # Without this, busybox switch_root unmounts our initramfs
++        # devtmpfs as it pivots, leaving the new root with an empty
++        # /dev. erlinit then can't resolve any /dev/<block> path and
++        # the kernel reboots.
++        mount --move /proc /sysroot/proc 2>/dev/null \
++            || echo_kmsg "  warn: /proc move failed"
++        mount --move /sys  /sysroot/sys  2>/dev/null \
++            || echo_kmsg "  warn: /sys move failed"
++        mount --move /dev  /sysroot/dev  2>/dev/null \
++            || echo_kmsg "  warn: /dev move failed"
++        echo_kmsg "Switching to /sysroot"
+         exec switch_root /sysroot /sbin/init
+     else
+         echo_kmsg "Rootfs not mounted, launching debug_console..."

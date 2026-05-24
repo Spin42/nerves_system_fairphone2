@@ -1,0 +1,12 @@
+config BR2_PACKAGE_HEXAGONRPC
+	bool "hexagonrpc [Qualcomm generic]"
+	help
+	  Hexagon FastRPC userspace implementation providing hexagonrpcd
+	  (reverse tunnel daemon for DSP file/memory serving), chrecd
+	  (Context Hub Runtime Environment client), and libhexagonrpc.
+
+	  On the Fairphone 2 the ADSP runs the sensor firmware; hexagonrpcd
+	  serves it the DSP shell + libraries over /dev/fastrpc-adsp at boot
+	  so its sensor PD can come up. Needs kernel CONFIG_FASTRPC.
+
+	  https://github.com/linux-msm/hexagonrpc

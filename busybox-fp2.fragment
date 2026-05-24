@@ -1,0 +1,97 @@
+# Busybox config fragment for nerves_system_fairphone2.
+#
+# Appended on top of board/nerves-common/busybox.config (which is
+# deliberately minimal — it expects erlinit + a Nerves OTP release to
+# do the heavy lifting and disables most applets). For the citronics
+# initramfs, we need a real Unix userland *inside* the initramfs to:
+#
+#   * kpartx-symlink the subpartitions of /dev/mmcblk0p20
+#   * pivot to the rootfs (switch_root)
+#   * provide an over-USB recovery shell (telnetd / getty) when the
+#     mount path fails
+#   * give the init script the half-dozen text / fs helpers it actually
+#     uses (ln, chmod, head, sed, …)
+#
+# Each `=y` here enables the corresponding applet. Buildroot appends
+# this file to .config after `make oldconfig`, so anything we set here
+# wins over the base config.
+
+# --- Critical: subpartition symlinks + pivot_root path -----------------------
+CONFIG_LN=y
+CONFIG_SWITCH_ROOT=y
+CONFIG_MDEV=y
+CONFIG_FEATURE_MDEV_CONF=y
+CONFIG_FEATURE_MDEV_RENAME=y
+CONFIG_FEATURE_MDEV_EXEC=y
+CONFIG_FEATURE_INSTALLER=y
+
+# --- File / text helpers the init + functions.sh scripts invoke -------------
+CONFIG_CHMOD=y
+CONFIG_TOUCH=y
+CONFIG_HEAD=y
+CONFIG_CUT=y
+CONFIG_SED=y
+CONFIG_WC=y
+CONFIG_ECHO=y
+CONFIG_TRUE=y
+CONFIG_FALSE=y
+CONFIG_ENV=y
+CONFIG_PRINTF=y
+CONFIG_TEST=y
+CONFIG_FEATURE_TEST_64=y
+# basename + dirname are used by functions.sh's kpartx symlink loop —
+# without them, `for dev in /dev/mapper/$(basename "$base_device")p*`
+# evaluates to an empty glob, no /dev/mmcblk0p20pN symlinks are
+# created, and mount_rootfs cannot find the device.
+CONFIG_BASENAME=y
+CONFIG_DIRNAME=y
+
+# seq is THE critical bit. functions.sh's "wait up to N seconds for
+# the rootfs device" loop is `for i in $(seq 1 $timeout); do ...`.
+# Without seq the command substitution produces empty, the loop body
+# never runs, the post-loop existence check fires before the eMMC
+# has had a chance to enumerate, and the script gives up with
+# "Timeout waiting for rootfs device" within ~5 ms of starting.
+CONFIG_SEQ=y
+
+# Other shell utilities commonly invoked by initramfs / device boot
+# scripts. Cheap to ship and removes whole classes of "command not
+# found" failures down the line.
+CONFIG_AWK=y
+CONFIG_TR=y
+CONFIG_EXPR=y
+CONFIG_STAT=y
+CONFIG_SORT=y
+CONFIG_READLINK=y
+CONFIG_FEATURE_READLINK_FOLLOW=y
+CONFIG_HEXDUMP=y
+CONFIG_XXD=y
+CONFIG_MD5SUM=y
+CONFIG_SHA1SUM=y
+
+# --- Process introspection ---------------------------------------------------
+CONFIG_PIDOF=y
+CONFIG_FEATURE_PIDOF_SINGLE=y
+CONFIG_FEATURE_PIDOF_OMIT=y
+CONFIG_PGREP=y
+CONFIG_PKILL=y
+CONFIG_KILLALL=y
+CONFIG_UNAME=y
+CONFIG_FEATURE_UNAME_O=y
+
+# --- Recovery shell over USB-net (citronics fail_halt_boot path) ------------
+CONFIG_TELNETD=y
+CONFIG_FEATURE_TELNETD_STANDALONE=y
+CONFIG_GETTY=y
+
+# --- Filesystem nice-to-haves the recovery path uses -----------------------
+CONFIG_UMOUNT=y
+CONFIG_FEATURE_UMOUNT_ALL=y
+CONFIG_FEATURE_MOUNT_LABEL=y
+CONFIG_FEATURE_MOUNT_VERBOSE=y
+CONFIG_FEATURE_MOUNT_HELPERS=y
+CONFIG_DMESG=y
+CONFIG_LSMOD=y
+CONFIG_RMMOD=y
+CONFIG_INSMOD=y
+CONFIG_FEATURE_MODPROBE_BLACKLIST=y

@@ -1,0 +1,31 @@
+# Citronics initramfs deviceinfo for the Fairphone 2 (msm8974, armv7).
+#
+# The initramfs reads this file to learn USB-recovery / metadata details.
+# The actual rootfs and boot subpartition device paths come from the kernel
+# command line (rootfs= / bootpart= in extlinux.conf), not from here, so the
+# values below are purely about the optional USB-network recovery channel and
+# human-readable identification.
+
+deviceinfo_format_version="0"
+deviceinfo_name="Fairphone 2"
+deviceinfo_manufacturer="Fairphone"
+deviceinfo_codename="fairphone-fp2"
+deviceinfo_year="2015"
+deviceinfo_arch="armhf"
+deviceinfo_chassis="handset"
+deviceinfo_keyboard="false"
+deviceinfo_external_storage="false"
+deviceinfo_screen_width="1080"
+deviceinfo_screen_height="1920"
+
+# USB gadget identifiers used by the initramfs's recovery USB-net.
+# Generic Google-of-Android IDs work for fastboot-style hosts.
+deviceinfo_usb_idVendor="0x18d1"
+deviceinfo_usb_idProduct="0xd001"
+deviceinfo_usb_serialnumber=""
+deviceinfo_usb_network_function="ncm.usb0"
+
+# unudhcpd hands out a single static IP to the connected host so you can
+# telnet into the initramfs over USB for recovery. Set to "true" to disable.
+deviceinfo_disable_dhcpd="false"
+deviceinfo_getty=""
