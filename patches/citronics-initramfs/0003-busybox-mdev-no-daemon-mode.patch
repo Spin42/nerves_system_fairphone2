@@ -1,0 +1,31 @@
+functions.sh: replace `mdev -d` with the busybox-compatible setup
+
+Mainline busybox `mdev` has no daemon mode — the `-d` flag is a
+postmarketOS-specific patch on top of busybox. With the upstream busybox
+that this Nerves system ships, `setup_mdev` fails immediately:
+
+    mdev: invalid option -- 'd'
+
+The upstream busybox approach is to register `mdev` as the kernel's
+hotplug helper via `/proc/sys/kernel/hotplug` and do an initial coldplug
+pass with `mdev -s`. Each later uevent then forks an `mdev` invocation,
+so there is no long-lived daemon to kill — the existing `kill mdev` in
+`init` becomes a silent no-op (it already redirects stderr to /dev/null
+and `mdev` is not a PID anyway).
+
+--- a/initramfs/usr/share/citronics-initramfs/functions.sh
++++ b/initramfs/usr/share/citronics-initramfs/functions.sh
+@@ -54,8 +54,11 @@
+ }
+
+ setup_mdev() {
+-    # Start mdev daemon
+-    mdev -d
++    # Mainline busybox mdev has no daemon mode (postmarketOS adds -d via
++    # patches). Use the upstream busybox approach: register mdev as the
++    # kernel's hotplug helper and do an initial coldplug pass.
++    echo /sbin/mdev > /proc/sys/kernel/hotplug
++    mdev -s
+ }
+
+ load_modules() {

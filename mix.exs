@@ -50,16 +50,16 @@ defmodule NervesSystemFairphone2.MixProject do
       platform_config: [
         defconfig: "nerves_defconfig"
       ],
-      # The :env key is an optional experimental feature for adding environment
-      # variables to the crosscompile environment. These are intended for
-      # llvm-based tooling that may need more precise processor information.
-      env: [
-        {"TARGET_ARCH", "arm"},
-        {"TARGET_CPU", "cortex_a15"},
-        {"TARGET_OS", "linux"},
-        {"TARGET_ABI", "gnueabihf"},
-        {"TARGET_GCC_FLAGS", ""}
-      ],
+      # The :env key forwards env vars into Buildroot's crosscompile
+      # environment. It's marketed as an LLVM-tooling helper, but in
+      # practice every host package's `make` invocation inherits these too.
+      # `TARGET_ARCH` collides with GNU make's implicit `COMPILE.c` recipe
+      # (`$(CC) $(CFLAGS) $(CPPFLAGS) $(TARGET_ARCH) -c`), which since
+      # lz4 1.10.0's lib/Makefile started using `$(COMPILE.c)` produces
+      # literally `gcc … arm -c …` and breaks the host-lz4 build. Since
+      # this system uses GCC (not LLVM) for cross-compilation, none of
+      # these need to be forwarded — Buildroot gets its target info from
+      # TARGET_CONFIGURE_OPTS independently.
       checksum: package_files()
     ]
   end

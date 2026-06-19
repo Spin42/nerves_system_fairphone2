@@ -495,6 +495,29 @@ CONFIG_MAILBOX=y
 CONFIG_QCOM_APCS_IPC=y
 CONFIG_IOMMU_IO_PGTABLE_ARMV7S=y
 CONFIG_REMOTEPROC=y
+# All three PIL drivers (Q6V5_MSS for modem, Q6V5_PAS for ADSP,
+# WCNSS_PIL for WiFi/BT) depend on QCOM_SCM to authenticate firmware
+# via secure monitor calls. The msm8974 DTSI ships a `firmware { scm }`
+# node referencing `qcom,scm-msm8974`; without CONFIG_QCOM_SCM no
+# driver binds it, so every PIL probe times out with -EPROBE_DEFER
+# (-110) and /sys/class/remoteproc/* never appears.
+# QCOM_MDT_LOADER and QCOM_PIL_INFO are needed alongside; both are
+# normally selected by the PIL drivers but listing them explicitly
+# guards against silent Kconfig regressions.
+CONFIG_QCOM_SCM=y
+CONFIG_QCOM_MDT_LOADER=y
+CONFIG_QCOM_PIL_INFO=y
+# Additional msm8974 platform glue the PIL drivers transitively need —
+# missing any of these blocks modem/WCNSS/ADSP probe and was the actual
+# cause of every remoteproc failing with -110 (deferred probe timeout)
+# despite QCOM_SCM being available. Cross-checked against pmOS's working
+# msm8974 config.
+CONFIG_QCOM_RPMPD=y           # RPM power-domains (DT `power-domains` phandle)
+CONFIG_QCOM_SMEM_STATE=y      # SMSM state-bits (DT `qcom,smem-states`)
+CONFIG_QCOM_GDSC=y            # GDSC power-domain switches
+CONFIG_INTERCONNECT_QCOM_SMD_RPM=y  # NoC bandwidth via RPM (DT `interconnects`)
+CONFIG_INTERCONNECT_CLK=y
+CONFIG_QCOM_QMI_HELPERS=m     # QMI helpers used by pd-mapper / sysmon
 CONFIG_QCOM_Q6V5_MSS=m
 CONFIG_QCOM_Q6V5_PAS=m
 CONFIG_QCOM_WCNSS_PIL=m
