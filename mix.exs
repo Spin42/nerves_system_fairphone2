@@ -102,6 +102,7 @@ defmodule NervesSystemFairphone2.MixProject do
       "rootfs_overlay",
       "extlinux",
       "scripts",
+      "uboot",
       "packages",
       "patches",
       "fwup_include",

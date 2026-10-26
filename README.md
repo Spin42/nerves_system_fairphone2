@@ -12,7 +12,7 @@ This is the base Nerves System configuration for the Fairphone 2
 | Memory               | 2 GB LPDDR3 RAM                                                   |
 | Storage              | eMMC, firmware lives on the Android `userdata` partition          |
 | Linux kernel         | [`mlainez/linux-msm8x74`](https://github.com/mlainez/linux-msm8x74), branch `6.12/release` (6.12) |
-| Bootloader           | lk2nd-msm8974 → extlinux/extlinux.conf on the boot subpartition   |
+| Bootloader           | U-Boot → `boot.scr` on the boot subpartition (lk2nd → `extlinux.conf` also works) |
 | IEx terminal         | On-device display (`tty1`) or serial debug port (`ttyMSM0`)       |
 | Display              | 5" IPS LCD 1080x1920                                             |
 | WiFi                 | wcn36xx / prima (firmware + driver via remoteproc)                |
@@ -27,6 +27,9 @@ This is the base Nerves System configuration for the Fairphone 2
   `6.12/release` branch, the production series, which adds the MSM8974
   ADSP sensor stack and Krait DVFS on top of the msm8974-mainline tree.
   Krait DVFS and CPU thermal throttling are enabled.
+- **Bootloader** is U-Boot, which boots `boot.scr` from the active boot
+  subpartition. The `extlinux.conf` is still installed, so lk2nd keeps
+  working. See [Boot flow](#boot-flow).
 - Both device trees are built: the phone (`qcom-msm8974pro-fairphone-fp2.dtb`)
   and the mainboard on a carrier without battery or panel
   (`qcom-msm8974pro-fairphone-fp2-rig.dtb`).
@@ -94,21 +97,45 @@ userspace bring-up now lives in supervised OTP applications.
 Use `mix firmware.image` to generate a `.img` of your firmware.
 
 The stock Fairphone 2 bootloader won't chain-load a foreign kernel, so
-first flash `lk2nd-msm8974` (a second-stage bootloader) over `boot`,
-then push your Nerves firmware into `userdata`. Download the latest
-lk2nd image for the Fairphone 2
-[here](https://github.com/msm8916-mainline/lk2nd/releases) (the
-`lk2nd-msm8974.img` asset).
+first flash U-Boot (a second-stage bootloader) over `boot`, then push
+your Nerves firmware into `userdata`. Build `u-boot-fp2.img` with the
+`fairphone2_uboot_defconfig` of
+[`Spin42/buildroot-android`](https://github.com/Spin42/buildroot-android)
+(see its `docs/fairphone2_uboot.md`).
 
 ```bash
 # Boot the FP2 into fastboot (hold Power + Volume Down). You should land
 # on the Fairphone splashscreen with a blue blinking LED; USB-attach it.
 
-fastboot flashing unlock                 # once per device
-fastboot flash boot lk2nd-msm8974.img    # second-stage bootloader
-fastboot flash userdata <your_firmware>.img
-fastboot reboot
+fastboot flashing unlock                       # once per device
+fastboot -s <serial> flash userdata <your_firmware>.img
+fastboot -s <serial> flash boot u-boot-fp2.img # second-stage bootloader
+fastboot -s <serial> reboot
 ```
+
+`lk2nd-msm8974.img` from the
+[lk2nd releases](https://github.com/msm8916-mainline/lk2nd/releases)
+still boots the same firmware through `extlinux.conf`, without the
+U-Boot settings below.
+
+### Citronics Lime and other carrier boards
+
+On a carrier board the phone's USB port goes to a powered hub that
+doesn't ground the USB ID line, so tell U-Boot and Linux to be the USB
+host, once, from the U-Boot prompt (serial console, a key during the
+boot delay):
+
+```
+setenv usb_mode host
+setenv fp2_dtb qcom-msm8974pro-fairphone-fp2-rig.dtb   # no battery, no panel
+saveenv
+boot
+```
+
+With `usb_mode=host`, `boot.scr` sets `dr_mode = "host"` on the USB
+controller in the kernel device tree and removes its `vbus-supply`, so
+the PMIC never drives VBUS against the carrier's supply. Leave
+`fp2_dtb` unset to boot the phone device tree.
 
 If nothing failed you should see your phone boot the Nerves firmware.
 After that, `mix firmware && mix upload` works over the network, unless
@@ -150,16 +177,22 @@ subpartitions as `/dev/mmcblk0p20p1` … `/dev/mmcblk0p20p3`.
 /dev/mmcblk0p20   ─── flashed via `fastboot flash userdata <fw>.img` ───
 ├─ MBR (block 0)
 ├─ uboot env       (Nerves firmware metadata, 8 KiB)
-├─ Boot A          (ext2, 50 MiB — kernel + dtbs + initramfs + extlinux)
+├─ Boot A          (ext2, 50 MiB — kernel + dtbs + initramfs + boot.scr + extlinux)
 ├─ Boot B          (ext2, 50 MiB)
 ├─ Rootfs A        (250 MiB)
 ├─ Rootfs B        (250 MiB)
 └─ Application     (f2fs, expands to fill the partition, mounted at /root)
 ```
 
-lk2nd-msm8974 reads `/extlinux/extlinux.conf` from the active boot
-subpartition and loads `zImage` + `qcom-msm8974pro-fairphone-fp2.dtb` +
-`initramfs.gz`. The kernel command line passes `rootfs=` / `bootpart=`
+### Boot flow
+
+U-Boot maps `userdata` as a block device (`blkmap`) and sources
+`/boot.scr` from the first partition of the image in it, which the MBR
+swap done by fwup on every update keeps pointing at the active boot
+subpartition (`uboot/boot.cmd`). It loads `zImage`, the device tree
+(`fp2_dtb`, default `qcom-msm8974pro-fairphone-fp2.dtb`) and
+`initramfs.gz`. lk2nd-msm8974 reads `/extlinux/extlinux.conf` from the
+same subpartition instead. The kernel command line passes `rootfs=` / `bootpart=`
 to the initramfs, which kpartx-maps the parent device, mounts the
 rootfs subpartition read-only at `/sysroot`, mounts the boot
 subpartition at `/sysroot/boot`, and `switch_root`s into it. `erlinit`

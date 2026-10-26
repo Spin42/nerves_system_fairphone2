@@ -5,6 +5,7 @@ set -e
 # Create boot partition image
 mkdir -p $BINARIES_DIR/boot/extlinux
 cp $NERVES_DEFCONFIG_DIR/extlinux/extlinux.conf $BINARIES_DIR/boot/extlinux/
+cp $BINARIES_DIR/boot.scr $BINARIES_DIR/boot/
 cp $BINARIES_DIR/zImage $BINARIES_DIR/boot/
 cp $BINARIES_DIR/*.dtb $BINARIES_DIR/boot/
 cp $BINARIES_DIR/initramfs.gz $BINARIES_DIR/boot/
