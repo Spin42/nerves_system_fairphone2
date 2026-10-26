@@ -107,7 +107,7 @@ defmodule NervesSystemFairphone2.MixProject do
       "fwup_include",
       "fwup-ops.conf",
       "fwup.conf",
-      "linux-6.15.defconfig",
+      "linux-6.12.defconfig",
       "busybox-fp2.fragment",
       "Config.in",
       "external.mk",

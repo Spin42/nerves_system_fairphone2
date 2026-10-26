@@ -11,7 +11,7 @@ This is the base Nerves System configuration for the Fairphone 2
 | GPU                  | Qualcomm Adreno 330                                              |
 | Memory               | 2 GB LPDDR3 RAM                                                   |
 | Storage              | eMMC, firmware lives on the Android `userdata` partition          |
-| Linux kernel         | [`mlainez/linux-msm8x74`](https://github.com/mlainez/linux-msm8x74), branch `staging` (6.15) |
+| Linux kernel         | [`mlainez/linux-msm8x74`](https://github.com/mlainez/linux-msm8x74), branch `6.12/release` (6.12) |
 | Bootloader           | lk2nd-msm8974 → extlinux/extlinux.conf on the boot subpartition   |
 | IEx terminal         | On-device display (`tty1`) or serial debug port (`ttyMSM0`)       |
 | Display              | 5" IPS LCD 1080x1920                                             |
@@ -24,8 +24,12 @@ This is the base Nerves System configuration for the Fairphone 2
 ## What changed vs. the older system
 
 - **Kernel** now points at the [`mlainez/linux-msm8x74`](https://github.com/mlainez/linux-msm8x74)
-  `staging` fork (6.15), which adds the MSM8974 ADSP sensor stack and
-  Krait DVFS on top of the msm8974-mainline tree.
+  `6.12/release` branch, the production series, which adds the MSM8974
+  ADSP sensor stack and Krait DVFS on top of the msm8974-mainline tree.
+  Krait DVFS and CPU thermal throttling are enabled.
+- Both device trees are built: the phone (`qcom-msm8974pro-fairphone-fp2.dtb`)
+  and the mainboard on a carrier without battery or panel
+  (`qcom-msm8974pro-fairphone-fp2-rig.dtb`).
 - **Initramfs** is now built from source and matched to the running
   kernel (the `citronics-initramfs` package) instead of downloading a
   single prebuilt `.cpio.gz` with modules baked in for one fixed kernel.
@@ -130,9 +134,9 @@ Useful side-channels:
   nerves_system_fairphone2 --force` — rebuild just the system after a
   defconfig tweak.
 
-The kernel is tracked by branch (`staging`); for a fully reproducible
-release, pin `BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION` in `nerves_defconfig`
-to a commit SHA.
+The kernel is pinned to a commit of `6.12/release` in `nerves_defconfig`
+(`BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION`); bump that SHA to pick up newer
+kernel work.
 
 ## Partition layout
 
@@ -146,7 +150,7 @@ subpartitions as `/dev/mmcblk0p20p1` … `/dev/mmcblk0p20p3`.
 /dev/mmcblk0p20   ─── flashed via `fastboot flash userdata <fw>.img` ───
 ├─ MBR (block 0)
 ├─ uboot env       (Nerves firmware metadata, 8 KiB)
-├─ Boot A          (ext2, 50 MiB — kernel + dtb + initramfs + extlinux)
+├─ Boot A          (ext2, 50 MiB — kernel + dtbs + initramfs + extlinux)
 ├─ Boot B          (ext2, 50 MiB)
 ├─ Rootfs A        (250 MiB)
 ├─ Rootfs B        (250 MiB)
@@ -223,8 +227,8 @@ debugging CLI.
 The Fairphone 2's sensors (LSM330D accelerometer + gyroscope, AK8963
 magnetometer, LT1PA01 proximity + ambient light) hang off the **ADSP**,
 not the application CPU. The ADSP runs Qualcomm's sensor firmware and
-publishes samples over the **SMGR / QMI** service. The `staging` kernel
-fork adds the in-kernel drivers that consume it:
+publishes samples over the **SMGR / QMI** service. The `mlainez/linux-msm8x74`
+kernel fork adds the in-kernel drivers that consume it:
 
 - `qcom_smgr` (`CONFIG_IIO_QCOM_SMGR*=m`) — surfaces each sensor as a
   `qcom-smgr-*` IIO device under `/sys/bus/iio/devices`.
@@ -261,8 +265,8 @@ Each device exposes the usual IIO interface — `in_accel_*_raw` /
 `in_accel_scale` for one-shot reads, or the buffered `scan_elements` +
 character-device path for streaming.
 
-> The ADSP sensor firmware is only present in the
-> `mlainez/linux-msm8x74` `staging` fork. The `request_firmware` path
+> The ADSP sensor drivers are only present in the
+> `mlainez/linux-msm8x74` fork. The `request_firmware` path
 > needs `/lib/firmware/qcom/sensors/sns.reg`; the blob committed in
 > `packages/fp2-firmware/sns.reg` was extracted from the FP2 persist
 > partition.

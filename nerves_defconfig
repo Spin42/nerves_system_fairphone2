@@ -28,25 +28,24 @@ BR2_GENERATE_LOCALE="en_US.UTF-8"
 BR2_ROOTFS_OVERLAY="${BR2_EXTERNAL_NERVES_PATH}/board/nerves-common/rootfs_overlay ${NERVES_DEFCONFIG_DIR}/rootfs_overlay"
 BR2_ROOTFS_POST_BUILD_SCRIPT="${BR2_EXTERNAL_NERVES_PATH}/board/nerves-common/post-build.sh ${NERVES_DEFCONFIG_DIR}/post-build.sh"
 BR2_ROOTFS_POST_IMAGE_SCRIPT="${NERVES_DEFCONFIG_DIR}/post-createfs.sh"
-# Kernel — mlainez/linux-msm8x74 staging. This fork adds the MSM8974 ADSP
-# sensor stack (qcom_smgr IIO drivers + qcom_sns_reg registry over SMGR/QMI),
-# Krait DVFS and other bring-up on top of the msm8974-mainline tree. The
-# kernel config in this system was extracted from that same tree, so they
-# need to stay in sync.
+# Kernel — mlainez/linux-msm8x74 6.12/release, the production series. This
+# fork adds the MSM8974 ADSP sensor stack (qcom_smgr IIO drivers +
+# qcom_sns_reg registry over SMGR/QMI), Krait DVFS and other bring-up on top
+# of the msm8974-mainline tree. The kernel config in this system was
+# extracted from that same tree, so they need to stay in sync.
 #
-# Pinned to a commit (the `staging` HEAD at the time of writing) rather than
-# the moving branch name: BR2_REPRODUCIBLE=y wants a fixed source, and a
-# branch ref makes Buildroot cache one snapshot keyed on "staging" and never
-# re-fetch. Bump this SHA to pull in newer kernel work (it must be a commit on
-# `staging`).
+# Pinned to a commit rather than the moving branch name: BR2_REPRODUCIBLE=y
+# wants a fixed source, and a branch ref makes Buildroot cache one snapshot
+# keyed on the branch name and never re-fetch. Bump this SHA to pull in newer
+# kernel work (it must be a commit on `6.12/release`).
 BR2_LINUX_KERNEL=y
 BR2_LINUX_KERNEL_CUSTOM_GIT=y
 BR2_LINUX_KERNEL_CUSTOM_REPO_URL="https://github.com/mlainez/linux-msm8x74"
-BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="392e63037af05c7cfed06fd93d0a5e18b76e8de3"
+BR2_LINUX_KERNEL_CUSTOM_REPO_VERSION="e38507ca3e01e4b807ba20944bb1d166ec0cbd6f"
 BR2_LINUX_KERNEL_USE_CUSTOM_CONFIG=y
-BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="${NERVES_DEFCONFIG_DIR}/linux-6.15.defconfig"
+BR2_LINUX_KERNEL_CUSTOM_CONFIG_FILE="${NERVES_DEFCONFIG_DIR}/linux-6.12.defconfig"
 BR2_LINUX_KERNEL_DTS_SUPPORT=y
-BR2_LINUX_KERNEL_INTREE_DTS_NAME="qcom/qcom-msm8974pro-fairphone-fp2"
+BR2_LINUX_KERNEL_INTREE_DTS_NAME="qcom/qcom-msm8974pro-fairphone-fp2 qcom/qcom-msm8974pro-fairphone-fp2-rig"
 BR2_LINUX_KERNEL_DTB_OVERLAY_SUPPORT=y
 BR2_LINUX_KERNEL_NEEDS_HOST_OPENSSL=y
 BR2_PACKAGE_BUSYBOX_CONFIG="${BR2_EXTERNAL_NERVES_PATH}/board/nerves-common/busybox.config"
