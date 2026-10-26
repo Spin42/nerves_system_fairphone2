@@ -67,8 +67,8 @@ defmodule NervesSystemFairphone2.MixProject do
   defp deps do
     [
       {:nerves, "~> 1.11", runtime: false},
-      {:nerves_system_br, "1.33.8", runtime: false},
-      {:nerves_toolchain_armv7_nerves_linux_gnueabihf, "~> 14.2.0", runtime: false},
+      {:nerves_system_br, "1.35.3", runtime: false},
+      {:nerves_toolchain_armv7_nerves_linux_gnueabihf, "~> 15.3.1", runtime: false},
       {:nerves_system_linter, "~> 0.4", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.22", only: :docs, runtime: false}
     ]

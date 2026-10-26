@@ -31,8 +31,8 @@ This is the base Nerves System configuration for the Fairphone 2
   single prebuilt `.cpio.gz` with modules baked in for one fixed kernel.
   See [Partition layout](#partition-layout).
 - **Sensors** are supported through the ADSP (see [Sensors](#sensors)).
-- Built against `nerves_system_br 1.33.8` with the 14.2.0 (GCC 14)
-  armv7 Nerves toolchain.
+- Built against `nerves_system_br 1.35.3` (Buildroot 2026.08.1,
+  Erlang/OTP 29) with the 15.3.1 (GCC 15) armv7 Nerves toolchain.
 
 ## Using
 
