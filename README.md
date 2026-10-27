@@ -120,22 +120,16 @@ U-Boot settings below.
 
 ### Citronics Lime and other carrier boards
 
-On a carrier board the phone's USB port goes to a powered hub that
-doesn't ground the USB ID line, so tell U-Boot and Linux to be the USB
-host, once, from the U-Boot prompt (serial console, a key during the
-boot delay):
+On the Citronics Lime the mainboard has no panel, so U-Boot boots the
+carrier device tree (`qcom-msm8974pro-fairphone-fp2-rig.dtb`) on its own,
+and the carrier grounds the USB ID line, so Linux is the USB host of the
+carrier's hub (Ethernet, the STM32) and powers it through the PMIC OTG
+boost. Nothing has to be set in U-Boot.
 
-```
-setenv usb_mode host
-setenv fp2_dtb qcom-msm8974pro-fairphone-fp2-rig.dtb   # no battery, no panel
-saveenv
-boot
-```
-
-With `usb_mode=host`, `boot.scr` sets `dr_mode = "host"` on the USB
-controller in the kernel device tree and removes its `vbus-supply`, so
-the PMIC never drives VBUS against the carrier's supply. Leave
-`fp2_dtb` unset to boot the phone device tree.
+Two U-Boot variables override this when needed (`setenv ...; saveenv` at
+the U-Boot prompt): `fp2_dtb` names the device tree to boot, and
+`usb_mode=host` makes Linux a USB host on a carrier that leaves the ID
+line floating.
 
 If nothing failed you should see your phone boot the Nerves firmware.
 After that, `mix firmware && mix upload` works over the network, unless
@@ -190,7 +184,8 @@ U-Boot maps `userdata` as a block device (`blkmap`) and sources
 `/boot.scr` from the first partition of the image in it, which the MBR
 swap done by fwup on every update keeps pointing at the active boot
 subpartition (`uboot/boot.cmd`). It loads `zImage`, the device tree
-(`fp2_dtb`, default `qcom-msm8974pro-fairphone-fp2.dtb`) and
+(`fp2_dtb`, else the carrier one when LK lit no panel, else the phone
+one) and
 `initramfs.gz`. lk2nd-msm8974 reads `/extlinux/extlinux.conf` from the
 same subpartition instead. The kernel command line passes `rootfs=` / `bootpart=`
 to the initramfs, which kpartx-maps the parent device, mounts the
