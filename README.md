@@ -299,6 +299,30 @@ character-device path for streaming.
 > `packages/fp2-firmware/sns.reg` was extracted from the FP2 persist
 > partition.
 
+## Limeboard STM32
+
+The Lime carries an STM32F401 on port `1-1.5` of its USB hub. It ships
+with CircuitPython (a CDC ACM serial REPL and a `CIRCUITPY` USB drive),
+but any firmware works: the kernel has the CDC ACM, HID (`hidraw`), USB
+mass storage and USB serial drivers, and libusb is installed for vendor
+interfaces.
+
+`limeboard-mcu` finds it by its USB port, whatever USB ID its firmware
+uses, and reflashes it through the STM32 ROM DFU bootloader with
+`dfu-util`:
+
+```elixir
+cmd("limeboard-mcu status")
+cmd("limeboard-mcu flash /root/firmware.bin")   # raw image at 0x08000000
+```
+
+The board gives Linux no control over BOOT0 or reset of the STM32, so
+`limeboard-mcu bootloader` relies on the running firmware to enter the
+ROM bootloader: through a DFU runtime interface (DFU_DETACH), the 1200
+baud touch on its CDC ACM port, or the CircuitPython REPL. **Keep one of
+these in any firmware you flash**, or recovering it will need BOOT0 held
+high by hand at reset.
+
 ## WiFi
 
 The base image includes firmware and drivers for the onboard wcn36xx

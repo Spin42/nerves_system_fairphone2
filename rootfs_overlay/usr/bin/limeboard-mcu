@@ -1,0 +1,131 @@
+#!/bin/sh
+#
+# Talks to the STM32F401 of the Citronics Limeboard, which sits on port 1-1.5
+# of the carrier's USB hub. The port, not the USB ID, identifies it: the ID
+# changes with the firmware, and the ROM DFU bootloader is 0483:df11.
+#
+# The board gives Linux no BOOT0/NRST control of the STM32, so reaching the
+# ROM bootloader relies on the running firmware. In order:
+#   - a DFU runtime interface: DFU_DETACH (dfu-util -e)
+#   - a CDC ACM port: the 1200 baud touch (Arduino, CircuitPython)
+#   - the CircuitPython REPL: microcontroller.RunMode.BOOTLOADER
+# Firmware without any of these needs BOOT0 held high at reset by hand.
+
+PORT=${LIMEBOARD_MCU_PORT:-1-1.5}
+DEV=/sys/bus/usb/devices/$PORT
+DFU_ID=0483:df11
+
+usage() {
+	cat <<EOF
+Usage: limeboard-mcu <command>
+
+  status                      USB ID, product and interfaces of the MCU
+  tty                         print its CDC ACM serial port
+  bootloader                  reboot it into the STM32 ROM DFU bootloader
+  flash <file.bin> [address]  flash a raw image (default address 0x08000000)
+                              through the ROM bootloader, then start it
+
+Set LIMEBOARD_MCU_PORT to use another USB port than $PORT.
+EOF
+	exit 1
+}
+
+die() {
+	echo "limeboard-mcu: $*" >&2
+	exit 1
+}
+
+usb_id() {
+	[ -e "$DEV/idVendor" ] || return 1
+	echo "$(cat "$DEV/idVendor"):$(cat "$DEV/idProduct")"
+}
+
+in_dfu() {
+	[ "$(usb_id)" = "$DFU_ID" ]
+}
+
+mcu_tty() {
+	for t in "$DEV"/"$PORT":*/tty/*; do
+		[ -e "$t" ] || continue
+		echo "/dev/${t##*/}"
+		return 0
+	done
+	return 1
+}
+
+# Interface classes: fe/01 is DFU (runtime mode while the firmware runs)
+has_dfu_runtime() {
+	for i in "$DEV"/"$PORT":*; do
+		[ "$(cat "$i/bInterfaceClass" 2>/dev/null)" = fe ] &&
+			[ "$(cat "$i/bInterfaceSubClass" 2>/dev/null)" = 01 ] &&
+			return 0
+	done
+	return 1
+}
+
+wait_dfu() {
+	for _ in $(seq 10); do
+		in_dfu && return 0
+		sleep 1
+	done
+	return 1
+}
+
+status() {
+	id=$(usb_id) || die "nothing on USB port $PORT"
+	echo "port:    $PORT"
+	echo "usb id:  $id"
+	echo "product: $(cat "$DEV/product" 2>/dev/null)"
+	if in_dfu; then
+		echo "mode:    STM32 ROM DFU bootloader"
+	fi
+	tty=$(mcu_tty) && echo "tty:     $tty"
+	for i in "$DEV"/"$PORT":*; do
+		[ -e "$i/bInterfaceClass" ] || continue
+		echo "if ${i##*:}:    class $(cat "$i/bInterfaceClass")/$(cat "$i/bInterfaceSubClass") $(cat "$i/interface" 2>/dev/null)"
+	done
+}
+
+bootloader() {
+	usb_id >/dev/null || die "nothing on USB port $PORT"
+	in_dfu && return 0
+
+	if has_dfu_runtime; then
+		echo "Detaching through the DFU runtime interface"
+		dfu-util -p "$PORT" -e
+		wait_dfu && return 0
+	fi
+
+	if tty=$(mcu_tty); then
+		echo "Trying the 1200 baud touch on $tty"
+		stty -F "$tty" 1200 hupcl
+		wait_dfu && return 0
+	fi
+
+	if tty=$(mcu_tty); then
+		echo "Trying the CircuitPython REPL on $tty"
+		stty -F "$tty" 115200 raw -echo
+		printf '\003\003\r' > "$tty"
+		sleep 1
+		printf 'import microcontroller\r' > "$tty"
+		printf 'microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)\r' > "$tty"
+		printf 'microcontroller.reset()\r' > "$tty"
+		wait_dfu && return 0
+	fi
+
+	die "the MCU did not enter the DFU bootloader; hold BOOT0 high and reset it"
+}
+
+flash() {
+	[ -f "$1" ] || die "no such file: $1"
+	bootloader || exit 1
+	dfu-util -p "$PORT" -a 0 -s "${2:-0x08000000}:leave" -D "$1"
+}
+
+case "$1" in
+status) status ;;
+tty) mcu_tty || die "no serial port on USB port $PORT" ;;
+bootloader) bootloader && echo "In the DFU bootloader" ;;
+flash) shift; [ -n "$1" ] || usage; flash "$@" ;;
+*) usage ;;
+esac

@@ -79,6 +79,9 @@ CONFIG_KILLALL=y
 CONFIG_UNAME=y
 CONFIG_FEATURE_UNAME_O=y
 
+# --- Serial line setup for limeboard-mcu (1200 baud touch, REPL) ----------
+CONFIG_STTY=y
+
 # --- Recovery shell over USB-net (citronics fail_halt_boot path) ------------
 CONFIG_TELNETD=y
 CONFIG_FEATURE_TELNETD_STANDALONE=y
