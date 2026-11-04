@@ -98,10 +98,12 @@ Use `mix firmware.image` to generate a `.img` of your firmware.
 
 The stock Fairphone 2 bootloader won't chain-load a foreign kernel, so
 first flash U-Boot (a second-stage bootloader) over `boot`, then push
-your Nerves firmware into `userdata`. Build `u-boot-fp2.img` with the
+your Nerves firmware into `userdata`. The system builds U-Boot and ships
+it as `images/u-boot-fp2.img` in its artifact (the same U-Boot as the
 `fairphone2_uboot_defconfig` of
-[`Spin42/buildroot-android`](https://github.com/Spin42/buildroot-android)
-(see its `docs/fairphone2_uboot.md`).
+[`Spin42/buildroot-android`](https://github.com/Spin42/buildroot-android),
+see its `docs/fairphone2_uboot.md`). From an application, it is under
+`$NERVES_SYSTEM/images/`.
 
 ```bash
 # Boot the FP2 into fastboot (hold Power + Volume Down). You should land
